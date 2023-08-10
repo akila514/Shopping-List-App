@@ -9,7 +9,7 @@ class ItemDataNotifier extends StateNotifier<List<Item>> {
               id: 'u1',
               name: 'Milk',
               quantity: 2,
-              itemCategorey: categoriesList[Categories.diary]!),
+              itemCategorey: categoriesList[Categories.dairy]!),
           Item(
               id: 'u1',
               name: 'Banana',
