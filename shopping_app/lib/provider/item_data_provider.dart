@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:shopping_app/data/categorey_data.dart';
 import 'package:shopping_app/models/item.dart';
 
@@ -24,6 +25,10 @@ class ItemDataNotifier extends StateNotifier<List<Item>> {
 
   void addToItemList(Item item) {
     state = [...state, item];
+  }
+
+  void insertToItemList(List<Item> previousItemList) {
+    state = previousItemList;
   }
 
   void deleteFromItemList(Item item) {
