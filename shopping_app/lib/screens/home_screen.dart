@@ -8,7 +8,6 @@ import 'dart:convert';
 import 'package:shopping_app/constants/colors.dart';
 import 'package:shopping_app/data/categorey_data.dart';
 import 'package:shopping_app/models/item.dart';
-import 'package:shopping_app/provider/item_data_provider.dart';
 import 'package:shopping_app/screens/new_item.dart';
 import 'package:shopping_app/widgets/single_item_card.dart';
 
@@ -24,13 +23,21 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreen extends ConsumerState<HomeScreen> {
   List<Item> savedList = [];
   var isLoading = true;
+  String? _error;
 
   void _loadDataFromDataBase() async {
     final url = Uri.https(
         'flutter-prep-5b7c4-default-rtdb.firebaseio.com', 'shopping-list.json');
 
-    final response = await http.read(url);
-    final Map<String, dynamic> savedItemList = json.decode(response);
+    final response = await http.get(url);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _error = 'Failed to fetch data. Please try again later';
+      });
+    }
+
+    final Map<String, dynamic> savedItemList = json.decode(response.body);
     List<Item> loadedItems = [];
 
     for (final item in savedItemList.entries) {
@@ -76,22 +83,25 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
     super.initState();
   }
 
-  void _deleteItemFromList(Item item) {
-    final itemListNotifier = ref.watch(itemDataProvider.notifier);
-    final previousItemList = ref.watch(itemDataProvider);
+  void _deleteItemFromList(Item item) async {
+    int index = savedList.indexOf(item);
 
-    ref.watch(itemDataProvider.notifier).deleteFromItemList(item);
+    setState(() {
+      savedList.remove(item);
+    });
 
-    ScaffoldMessenger.of(context).clearSnackBars();
+    final url = Uri.https('flutter-prep-5b7c4-default-rtdb.firebaseio.com',
+        'shopping-list/${item.id}.json');
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('$item deleted from the list.'),
-      action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () {
-            itemListNotifier.insertToItemList(previousItemList);
-          }),
-    ));
+    final response = await http.delete(
+      url,
+    );
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        savedList.insert(index, item);
+      });
+    }
   }
 
   @override
@@ -187,6 +197,25 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
         body: const Center(
           child: CircularProgressIndicator(
             color: primaryTextColor,
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      content = Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          title: const Text(
+            'Shopping App',
+            style: TextStyle(color: primaryTextColor),
+          ),
+          backgroundColor: appBarColor,
+        ),
+        body: Center(
+          child: Text(
+            _error!,
+            style: const TextStyle(color: primaryTextColor),
           ),
         ),
       );
