@@ -1,9 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:http/http.dart' as http;
+
+import 'dart:convert';
 
 import 'package:shopping_app/constants/colors.dart';
 import 'package:shopping_app/data/categorey_data.dart';
@@ -213,7 +213,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
       final url = Uri.https('flutter-prep-5b7c4-default-rtdb.firebaseio.com',
           'shopping-list.json');
 
-      await http.post(
+      final result = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode(
@@ -225,10 +225,21 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
         ),
       );
 
+      final Map<String, dynamic> resultData = json.decode(result.body);
+
+      setState(() {
+        savedList.add(
+          Item(
+              id: resultData['name'],
+              name: _enteredName,
+              quantity: _enteredQuantuty,
+              itemCategorey: _selectedCategory),
+        );
+      });
+
       if (!context.mounted) {
         return;
       }
-      _loadDataFromDataBase();
       Navigator.pop(context);
     }
   }
@@ -263,11 +274,30 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
         backgroundColor: appBarColor,
       ),
       body: savedList.isEmpty
-          ? const Center(
-              child: Text(
-                'Add a item to view...',
-                style: TextStyle(color: primaryTextColor),
-              ),
+          ? Column(
+              children: [
+                const Center(
+                  child: Text(
+                    'Add a item to view...',
+                    style: TextStyle(color: primaryTextColor),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  width: double.infinity,
+                  height: 50,
+                  decoration: const BoxDecoration(color: appBarColor),
+                  child: TextButton(
+                    onPressed: () {
+                      _openAddNewItemOverlay();
+                    },
+                    child: const Text(
+                      'Add a new Item',
+                      style: TextStyle(color: primaryTextColor, fontSize: 16),
+                    ),
+                  ),
+                )
+              ],
             )
           : Column(
               children: [
