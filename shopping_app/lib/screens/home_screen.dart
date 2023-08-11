@@ -1,7 +1,10 @@
-import 'dart:math';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:http/http.dart' as http;
+
 import 'package:shopping_app/constants/colors.dart';
 import 'package:shopping_app/data/categorey_data.dart';
 import 'package:shopping_app/models/item.dart';
@@ -22,6 +25,39 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
   var _enteredName = '';
   var _enteredQuantuty = 1;
   var _selectedCategory = categoriesList[Categories.vegetable]!;
+  List<Item> savedList = [];
+
+  void _loadDataFromDataBase() async {
+    final url = Uri.https(
+        'flutter-prep-5b7c4-default-rtdb.firebaseio.com', 'shopping-list.json');
+
+    final response = await http.read(url);
+    final Map<String, dynamic> savedItemList = json.decode(response);
+    List<Item> loadedItems = [];
+
+    for (final item in savedItemList.entries) {
+      final category = categoriesList.entries
+          .firstWhere(
+              (itemData) => itemData.value.title == item.value['itemCategorey'])
+          .value;
+      loadedItems.add(
+        Item(
+            id: item.key,
+            name: item.value['name'],
+            quantity: item.value['quantity'],
+            itemCategorey: category),
+      );
+    }
+    setState(() {
+      savedList = loadedItems;
+    });
+  }
+
+  @override
+  void initState() {
+    _loadDataFromDataBase();
+    super.initState();
+  }
 
   void _openAddNewItemOverlay() {
     showModalBottomSheet(
@@ -170,18 +206,30 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _saveItem() {
+  void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
+      final url = Uri.https('flutter-prep-5b7c4-default-rtdb.firebaseio.com',
+          'shopping-list.json');
+
+      await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(
+          {
+            'name': _enteredName,
+            'quantity': _enteredQuantuty,
+            'itemCategorey': _selectedCategory.title,
+          },
+        ),
+      );
+
+      if (!context.mounted) {
+        return;
+      }
+      _loadDataFromDataBase();
       Navigator.pop(context);
-      ref.read(itemDataProvider.notifier).addToItemList(
-            Item(
-                id: Random(1000).toString(),
-                name: _enteredName,
-                quantity: _enteredQuantuty,
-                itemCategorey: _selectedCategory),
-          );
     }
   }
 
@@ -205,8 +253,6 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    List itemList = ref.watch(itemDataProvider);
-
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -216,7 +262,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
         ),
         backgroundColor: appBarColor,
       ),
-      body: itemList.isEmpty
+      body: savedList.isEmpty
           ? const Center(
               child: Text(
                 'Add a item to view...',
@@ -228,13 +274,13 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                 Expanded(
                   child: ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: itemList.length,
+                      itemCount: savedList.length,
                       itemBuilder: (context, index) => Dismissible(
                             onDismissed: (direction) {
-                              _deleteItemFromList(itemList[index]);
+                              _deleteItemFromList(savedList[index]);
                             },
-                            key: ValueKey(itemList[index]),
-                            child: SingleItemCard(item: itemList[index]),
+                            key: ValueKey(savedList[index]),
+                            child: SingleItemCard(item: savedList[index]),
                           )),
                 ),
                 Container(

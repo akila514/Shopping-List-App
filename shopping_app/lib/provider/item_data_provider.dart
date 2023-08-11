@@ -27,6 +27,10 @@ class ItemDataNotifier extends StateNotifier<List<Item>> {
     state = [...state, item];
   }
 
+  void replaceItemList(List<Item> itemList) {
+    state = itemList;
+  }
+
   void insertToItemList(List<Item> previousItemList) {
     state = previousItemList;
   }
