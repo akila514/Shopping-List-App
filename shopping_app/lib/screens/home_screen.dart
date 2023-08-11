@@ -26,42 +26,48 @@ class _HomeScreen extends State<HomeScreen> {
     final url = Uri.https(
         'flutter-prep-5b7c4-default-rtdb.firebaseio.com', 'shopping-list.json');
 
-    final response = await http.get(url);
+    try {
+      final response = await http.get(url);
 
-    if (response.statusCode >= 400) {
-      setState(() {
-        _error = 'Failed to fetch data. Please try again later';
-      });
-    }
+      if (response.statusCode >= 400) {
+        setState(() {
+          _error = 'Failed to fetch data. Please try again later';
+        });
+      }
 
-    if (response.body == 'null') {
+      if (response.body == 'null') {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      final Map<String, dynamic> savedItemList = json.decode(response.body);
+      List<Item> loadedItems = [];
+
+      for (final item in savedItemList.entries) {
+        final category = categoriesList.entries
+            .firstWhere((itemData) =>
+                itemData.value.title == item.value['itemCategorey'])
+            .value;
+        loadedItems.add(
+          Item(
+              id: item.key,
+              name: item.value['name'],
+              quantity: item.value['quantity'],
+              itemCategorey: category),
+        );
+      }
+
       setState(() {
+        savedList = loadedItems;
         isLoading = false;
       });
-      return;
+    } catch (error) {
+      setState(() {
+        _error = 'Something went wrong.  Please try again later';
+      });
     }
-
-    final Map<String, dynamic> savedItemList = json.decode(response.body);
-    List<Item> loadedItems = [];
-
-    for (final item in savedItemList.entries) {
-      final category = categoriesList.entries
-          .firstWhere(
-              (itemData) => itemData.value.title == item.value['itemCategorey'])
-          .value;
-      loadedItems.add(
-        Item(
-            id: item.key,
-            name: item.value['name'],
-            quantity: item.value['quantity'],
-            itemCategorey: category),
-      );
-    }
-
-    setState(() {
-      savedList = loadedItems;
-      isLoading = false;
-    });
   }
 
   void navigatToNewItem() async {
@@ -171,7 +177,6 @@ class _HomeScreen extends State<HomeScreen> {
                 ),
               ),
             ),
-            const Spacer(),
             Container(
               width: double.infinity,
               height: 70,
