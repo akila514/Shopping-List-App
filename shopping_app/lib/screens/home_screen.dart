@@ -26,6 +26,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
   var _enteredQuantuty = 1;
   var _selectedCategory = categoriesList[Categories.vegetable]!;
   List<Item> savedList = [];
+  var isLoading = true;
 
   void _loadDataFromDataBase() async {
     final url = Uri.https(
@@ -50,6 +51,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
     }
     setState(() {
       savedList = loadedItems;
+      isLoading = false;
     });
   }
 
@@ -264,7 +266,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    var content = Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text(
@@ -273,62 +275,93 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
         ),
         backgroundColor: appBarColor,
       ),
-      body: savedList.isEmpty
-          ? Column(
-              children: [
-                const Center(
-                  child: Text(
-                    'Add a item to view...',
-                    style: TextStyle(color: primaryTextColor),
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: const BoxDecoration(color: appBarColor),
-                  child: TextButton(
-                    onPressed: () {
-                      _openAddNewItemOverlay();
-                    },
-                    child: const Text(
-                      'Add a new Item',
-                      style: TextStyle(color: primaryTextColor, fontSize: 16),
-                    ),
-                  ),
-                )
-              ],
-            )
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: savedList.length,
-                      itemBuilder: (context, index) => Dismissible(
-                            onDismissed: (direction) {
-                              _deleteItemFromList(savedList[index]);
-                            },
-                            key: ValueKey(savedList[index]),
-                            child: SingleItemCard(item: savedList[index]),
-                          )),
-                ),
-                Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: const BoxDecoration(color: appBarColor),
-                  child: TextButton(
-                    onPressed: () {
-                      _openAddNewItemOverlay();
-                    },
-                    child: const Text(
-                      'Add a new Item',
-                      style: TextStyle(color: primaryTextColor, fontSize: 16),
-                    ),
-                  ),
-                )
-              ],
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: savedList.length,
+                itemBuilder: (context, index) => Dismissible(
+                      onDismissed: (direction) {
+                        _deleteItemFromList(savedList[index]);
+                      },
+                      key: ValueKey(savedList[index]),
+                      child: SingleItemCard(item: savedList[index]),
+                    )),
+          ),
+          Container(
+            width: double.infinity,
+            height: 70,
+            decoration: const BoxDecoration(color: appBarColor),
+            child: TextButton(
+              onPressed: () {
+                _openAddNewItemOverlay();
+              },
+              child: const Text(
+                'Add a new Item',
+                style: TextStyle(color: primaryTextColor, fontSize: 16),
+              ),
             ),
+          )
+        ],
+      ),
     );
+
+    if (savedList.isEmpty) {
+      content = Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Shopping App',
+            style: TextStyle(color: primaryTextColor),
+          ),
+          backgroundColor: appBarColor,
+        ),
+        body: Column(
+          children: [
+            const Center(
+              child: Text(
+                'Add a item to view...',
+                style: TextStyle(color: primaryTextColor),
+              ),
+            ),
+            const Spacer(),
+            Container(
+              width: double.infinity,
+              height: 70,
+              decoration: const BoxDecoration(color: appBarColor),
+              child: TextButton(
+                onPressed: () {
+                  _openAddNewItemOverlay();
+                },
+                child: const Text(
+                  'Add a new Item',
+                  style: TextStyle(color: primaryTextColor, fontSize: 16),
+                ),
+              ),
+            )
+          ],
+        ),
+      );
+    }
+
+    if (isLoading) {
+      content = Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          title: const Text(
+            'Shopping App',
+            style: TextStyle(color: primaryTextColor),
+          ),
+          backgroundColor: appBarColor,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: primaryTextColor,
+          ),
+        ),
+      );
+    }
+
+    return content;
   }
 }
