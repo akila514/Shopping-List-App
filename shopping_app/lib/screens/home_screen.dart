@@ -34,6 +34,13 @@ class _HomeScreen extends State<HomeScreen> {
       });
     }
 
+    if (response.body == 'null') {
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
     final Map<String, dynamic> savedItemList = json.decode(response.body);
     List<Item> loadedItems = [];
 
@@ -146,6 +153,7 @@ class _HomeScreen extends State<HomeScreen> {
 
     if (savedList.isEmpty) {
       content = Scaffold(
+        backgroundColor: backgroundColor,
         appBar: AppBar(
           title: const Text(
             'Shopping App',
@@ -155,10 +163,12 @@ class _HomeScreen extends State<HomeScreen> {
         ),
         body: Column(
           children: [
-            const Center(
-              child: Text(
-                'Add a item to view...',
-                style: TextStyle(color: primaryTextColor),
+            const Expanded(
+              child: Center(
+                child: Text(
+                  'Add a item to view...',
+                  style: TextStyle(color: primaryTextColor),
+                ),
               ),
             ),
             const Spacer(),
