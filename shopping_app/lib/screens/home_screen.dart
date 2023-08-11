@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopping_app/constants/colors.dart';
@@ -16,7 +18,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreen extends ConsumerState<HomeScreen> {
-  void onChangeForm() {}
+  final _formKey = GlobalKey<FormState>();
+  var _enteredName = '';
+  var _enteredQuantuty = 1;
+  var _selectedCategory = categoriesList[Categories.vegetable]!;
 
   void _openAddNewItemOverlay() {
     showModalBottomSheet(
@@ -27,25 +32,35 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
       builder: (context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 20),
         child: Form(
+          key: _formKey,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
-                style: const TextStyle(color: Colors.white),
+                onSaved: (value) {
+                  _enteredName = value!;
+                },
+                maxLength: 50,
+                style: const TextStyle(
+                  color: primaryTextColor,
+                ),
                 decoration: const InputDecoration(
+                    counterStyle: TextStyle(color: primaryTextColor),
                     label: Text(
-                  'Item ID',
-                  style: TextStyle(color: primaryTextColor),
-                )),
-              ),
-              TextFormField(
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                    label: Text(
-                  'Item Name',
-                  style: TextStyle(color: primaryTextColor),
-                )),
+                      'Item Name',
+                      style: TextStyle(color: primaryTextColor),
+                    )),
+                validator: (value) {
+                  if (value == null ||
+                      value.isEmpty ||
+                      value.trim().length <= 1 ||
+                      value.trim().length >= 50) {
+                    return 'Item name must have between 1 to 50 characters ';
+                  } else {
+                    return null;
+                  }
+                },
               ),
               const SizedBox(
                 height: 30,
@@ -55,19 +70,34 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                 children: [
                   Expanded(
                     child: TextFormField(
+                      onSaved: (value) {
+                        _enteredQuantuty = int.parse(value!);
+                      },
+                      keyboardType: TextInputType.number,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
                         labelStyle: TextStyle(color: primaryTextColor),
                         labelText: 'Quantity',
                       ),
-                      initialValue: '1',
+                      initialValue: _enteredQuantuty.toString(),
+                      validator: (value) {
+                        if (value == null ||
+                            value.isEmpty ||
+                            int.tryParse(value.trim()) == null ||
+                            int.tryParse(value)! <= 0) {
+                          return 'Enter a valid positive number ';
+                        } else {
+                          return null;
+                        }
+                      },
                     ),
                   ),
                   const SizedBox(
-                    width: 10,
+                    width: 20,
                   ),
                   Expanded(
                     child: DropdownButtonFormField(
+                        value: _selectedCategory,
                         decoration: const InputDecoration(
                             label: Text(
                           'Select Category',
@@ -93,7 +123,11 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                                   ],
                                 ))
                         ],
-                        onChanged: (value) {}),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCategory = value!;
+                          });
+                        }),
                   )
                 ],
               ),
@@ -107,8 +141,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                     style: const ButtonStyle(
                         backgroundColor: MaterialStatePropertyAll(appBarColor)),
                     onPressed: () {
-                      // _validateUserInput(idController.text, nameController.text,
-                      //     quantityController.text, ref, context);
+                      _saveItem();
                     },
                     child: const Text(
                       'Add',
@@ -123,9 +156,9 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                         backgroundColor:
                             MaterialStatePropertyAll(Color(0xFFeb3b5a))),
                     onPressed: () {
-                      Navigator.pop(context);
+                      _formKey.currentState!.reset();
                     },
-                    child: const Text('Cancel',
+                    child: const Text('Reset',
                         style: TextStyle(color: primaryTextColor)),
                   )
                 ],
@@ -137,31 +170,19 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _validateUserInput(
-      String id, String name, String qty, WidgetRef ref, BuildContext context) {
-    if (id.isEmpty || name.isEmpty || qty.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: const Text('Please enter valid information'),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Ok'))
-          ],
-        ),
-      );
-      return;
+  void _saveItem() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      Navigator.pop(context);
+      ref.read(itemDataProvider.notifier).addToItemList(
+            Item(
+                id: Random(1000).toString(),
+                name: _enteredName,
+                quantity: _enteredQuantuty,
+                itemCategorey: _selectedCategory),
+          );
     }
-    Navigator.pop(context);
-    ref.read(itemDataProvider.notifier).addToItemList(Item(
-        id: id,
-        name: name,
-        quantity: int.parse(qty),
-        itemCategorey: categoriesList[Categories.carbs]!));
   }
 
   void _deleteItemFromList(Item item) {
@@ -195,36 +216,43 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
         ),
         backgroundColor: appBarColor,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: itemList.length,
-                itemBuilder: (context, index) => Dismissible(
-                      onDismissed: (direction) {
-                        _deleteItemFromList(itemList[index]);
-                      },
-                      key: ValueKey(itemList[index]),
-                      child: SingleItemCard(item: itemList[index]),
-                    )),
-          ),
-          Container(
-            width: double.infinity,
-            height: 50,
-            decoration: const BoxDecoration(color: appBarColor),
-            child: TextButton(
-              onPressed: () {
-                _openAddNewItemOverlay();
-              },
-              child: const Text(
-                'Add a new Item',
-                style: TextStyle(color: primaryTextColor, fontSize: 16),
+      body: itemList.isEmpty
+          ? const Center(
+              child: Text(
+                'Add a item to view...',
+                style: TextStyle(color: primaryTextColor),
               ),
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: itemList.length,
+                      itemBuilder: (context, index) => Dismissible(
+                            onDismissed: (direction) {
+                              _deleteItemFromList(itemList[index]);
+                            },
+                            key: ValueKey(itemList[index]),
+                            child: SingleItemCard(item: itemList[index]),
+                          )),
+                ),
+                Container(
+                  width: double.infinity,
+                  height: 50,
+                  decoration: const BoxDecoration(color: appBarColor),
+                  child: TextButton(
+                    onPressed: () {
+                      _openAddNewItemOverlay();
+                    },
+                    child: const Text(
+                      'Add a new Item',
+                      style: TextStyle(color: primaryTextColor, fontSize: 16),
+                    ),
+                  ),
+                )
+              ],
             ),
-          )
-        ],
-      ),
     );
   }
 }
