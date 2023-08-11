@@ -15,140 +15,173 @@ class HomeScreen extends ConsumerStatefulWidget {
   }
 }
 
-void _openAddNewItemOverlay(BuildContext context, WidgetRef ref) {
-  final idController = TextEditingController();
-  final nameController = TextEditingController();
-  final quantityController = TextEditingController();
+class _HomeScreen extends ConsumerState<HomeScreen> {
+  void onChangeForm() {}
 
-  showModalBottomSheet(
-    isScrollControlled: true,
-    context: context,
-    builder: (context) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            decoration: const InputDecoration(label: Text('Item ID')),
-            controller: idController,
-          ),
-          TextField(
-            decoration: const InputDecoration(label: Text('Item Name')),
-            controller: nameController,
-          ),
-          TextField(
-            decoration: const InputDecoration(label: Text('Quantity')),
-            controller: quantityController,
-          ),
-          const SizedBox(
-            height: 30,
-          ),
-          DropdownMenu(
-              label: const Text(
-                'Select Category',
-                style: TextStyle(fontSize: 12),
-              ),
-              dropdownMenuEntries: [
-                DropdownMenuEntry(
-                    value: Categories.vegetable,
-                    label: Categories.vegetable.name),
-                DropdownMenuEntry(
-                    value: Categories.carbs, label: Categories.carbs.name),
-                DropdownMenuEntry(
-                    value: Categories.convenience,
-                    label: Categories.convenience.name),
-                DropdownMenuEntry(
-                    value: Categories.dairy, label: Categories.dairy.name),
-                DropdownMenuEntry(
-                    value: Categories.meat, label: Categories.meat.name),
-                DropdownMenuEntry(
-                    value: Categories.fruit, label: Categories.fruit.name),
-                DropdownMenuEntry(
-                    value: Categories.hygiene, label: Categories.hygiene.name),
-                DropdownMenuEntry(
-                    value: Categories.spices, label: Categories.spices.name),
-                DropdownMenuEntry(
-                    value: Categories.sweets, label: Categories.sweets.name),
-                DropdownMenuEntry(
-                    value: Categories.convenience,
-                    label: Categories.convenience.name),
-                DropdownMenuEntry(
-                    value: Categories.other, label: Categories.other.name),
-              ]),
-          const SizedBox(
-            height: 50,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+  void _openAddNewItemOverlay() {
+    showModalBottomSheet(
+      backgroundColor: backgroundColor,
+      isScrollControlled: true,
+      context: context,
+      useSafeArea: true,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 20),
+        child: Form(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextButton(
-                onPressed: () {
-                  _validateUserInput(idController.text, nameController.text,
-                      quantityController.text, ref, context);
-                },
-                child: const Text('Add'),
+              TextFormField(
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                    label: Text(
+                  'Item ID',
+                  style: TextStyle(color: primaryTextColor),
+                )),
               ),
-              TextButton(
+              TextFormField(
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                    label: Text(
+                  'Item Name',
+                  style: TextStyle(color: primaryTextColor),
+                )),
+              ),
+              const SizedBox(
+                height: 30,
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelStyle: TextStyle(color: primaryTextColor),
+                        labelText: 'Quantity',
+                      ),
+                      initialValue: '1',
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  Expanded(
+                    child: DropdownButtonFormField(
+                        decoration: const InputDecoration(
+                            label: Text(
+                          'Select Category',
+                          style: TextStyle(color: primaryTextColor),
+                        )),
+                        dropdownColor: appBarColor,
+                        style: const TextStyle(color: primaryTextColor),
+                        items: [
+                          for (final category in categoriesList.entries)
+                            DropdownMenuItem(
+                                value: category.value,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      color: category.value.color,
+                                      width: 16,
+                                      height: 16,
+                                    ),
+                                    const SizedBox(
+                                      width: 6,
+                                    ),
+                                    Text(category.value.title)
+                                  ],
+                                ))
+                        ],
+                        onChanged: (value) {}),
+                  )
+                ],
+              ),
+              const SizedBox(
+                height: 80,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    style: const ButtonStyle(
+                        backgroundColor: MaterialStatePropertyAll(appBarColor)),
+                    onPressed: () {
+                      // _validateUserInput(idController.text, nameController.text,
+                      //     quantityController.text, ref, context);
+                    },
+                    child: const Text(
+                      'Add',
+                      style: TextStyle(color: primaryTextColor),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  TextButton(
+                    style: const ButtonStyle(
+                        backgroundColor:
+                            MaterialStatePropertyAll(Color(0xFFeb3b5a))),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Cancel',
+                        style: TextStyle(color: primaryTextColor)),
+                  )
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _validateUserInput(
+      String id, String name, String qty, WidgetRef ref, BuildContext context) {
+    if (id.isEmpty || name.isEmpty || qty.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: const Text('Please enter valid information'),
+          actions: [
+            TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text('Cancel'),
-              )
-            ],
-          )
-        ],
-      ),
-    ),
-  );
-}
-
-void _validateUserInput(
-    String id, String name, String qty, WidgetRef ref, BuildContext context) {
-  if (id.isEmpty || name.isEmpty || qty.isEmpty) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: const Text('Please enter valid information'),
-        actions: [
-          TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Ok'))
-        ],
-      ),
-    );
-    return;
+                child: const Text('Ok'))
+          ],
+        ),
+      );
+      return;
+    }
+    Navigator.pop(context);
+    ref.read(itemDataProvider.notifier).addToItemList(Item(
+        id: id,
+        name: name,
+        quantity: int.parse(qty),
+        itemCategorey: categoriesList[Categories.carbs]!));
   }
-  Navigator.pop(context);
-  ref.read(itemDataProvider.notifier).addToItemList(Item(
-      id: id,
-      name: name,
-      quantity: int.parse(qty),
-      itemCategorey: categoriesList[Categories.carbs]!));
-}
 
-void _deleteItemFromList(Item item, WidgetRef ref, BuildContext context) {
-  final itemListNotifier = ref.watch(itemDataProvider.notifier);
-  final previousItemList = ref.watch(itemDataProvider);
+  void _deleteItemFromList(Item item) {
+    final itemListNotifier = ref.watch(itemDataProvider.notifier);
+    final previousItemList = ref.watch(itemDataProvider);
 
-  ref.watch(itemDataProvider.notifier).deleteFromItemList(item);
+    ref.watch(itemDataProvider.notifier).deleteFromItemList(item);
 
-  ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).clearSnackBars();
 
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Text('$item deleted from the list.'),
-    action: SnackBarAction(
-        label: 'Undo',
-        onPressed: () {
-          itemListNotifier.insertToItemList(previousItemList);
-        }),
-  ));
-}
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('$item deleted from the list.'),
+      action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            itemListNotifier.insertToItemList(previousItemList);
+          }),
+    ));
+  }
 
-class _HomeScreen extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     List itemList = ref.watch(itemDataProvider);
@@ -170,7 +203,7 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
                 itemCount: itemList.length,
                 itemBuilder: (context, index) => Dismissible(
                       onDismissed: (direction) {
-                        _deleteItemFromList(itemList[index], ref, context);
+                        _deleteItemFromList(itemList[index]);
                       },
                       key: ValueKey(itemList[index]),
                       child: SingleItemCard(item: itemList[index]),
@@ -178,11 +211,11 @@ class _HomeScreen extends ConsumerState<HomeScreen> {
           ),
           Container(
             width: double.infinity,
-            height: 100,
+            height: 50,
             decoration: const BoxDecoration(color: appBarColor),
             child: TextButton(
               onPressed: () {
-                _openAddNewItemOverlay(context, ref);
+                _openAddNewItemOverlay();
               },
               child: const Text(
                 'Add a new Item',

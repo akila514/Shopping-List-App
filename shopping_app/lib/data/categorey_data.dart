@@ -28,3 +28,16 @@ enum Categories {
   hygiene,
   other
 }
+
+List<String> categoriesStringList = [
+  'vegetable',
+  'fruit',
+  'meat',
+  'dairy',
+  'carbs',
+  'sweets',
+  'spices',
+  'convenience',
+  'hygiene',
+  'other'
+];
