@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:http/http.dart' as http;
-
 import 'dart:convert';
 
 import 'package:shopping_app/constants/colors.dart';
@@ -11,16 +8,16 @@ import 'package:shopping_app/models/item.dart';
 import 'package:shopping_app/screens/new_item.dart';
 import 'package:shopping_app/widgets/single_item_card.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() {
+  State<StatefulWidget> createState() {
     return _HomeScreen();
   }
 }
 
-class _HomeScreen extends ConsumerState<HomeScreen> {
+class _HomeScreen extends State<HomeScreen> {
   List<Item> savedList = [];
   var isLoading = true;
   String? _error;
